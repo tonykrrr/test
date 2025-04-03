@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app1:
+    build: .
+    environment:
+      - APP_PORT=8080
+    networks:
+      - app-network
+    labels:
+      - "traefik.http.routers.app1.rule=Host(app1.localhost)"
+
+  app2:
+    build: .
+    environment:
+      - APP_PORT=8081
+    networks:
+      - app-network
+    labels:
+      - "traefik.http.routers.app2.rule=Host(app2.localhost)"
+
+  traefik:
+    image: traefik:v2.9
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    networks:
+      - app-network
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+networks:
+  app-network:
+    driver: bridge
