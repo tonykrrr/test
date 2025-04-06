@@ -1,38 +1,50 @@
-version: '3.8'
-
 services:
   app1:
     build: .
     environment:
       - APP_PORT=8080
     networks:
-      - app-network
+      - app1-network
     labels:
-      - "traefik.http.routers.app1.rule=Host(app1.localhost)"
-
+      - "traefik.enable=true"
+      - "traefik.http.routers.app1.entrypoints=web"
+      - "traefik.http.routers.app1.rule=Host(\"test.nokvag.ru\")"
+      - "traefik.http.services.app1.loadbalancer.server.port=8080"
+      - "traefik.http.services.app1.loadbalancer.healthcheck.path=/healthz"
+      - "traefik.http.services.app1.loadbalancer.healthcheck.interval=10s"
+      - "traefik.http.services.app1.loadbalancer.healthcheck.timeout=3s"
+    expose:
+      - "8080"
   app2:
     build: .
     environment:
       - APP_PORT=8081
     networks:
-      - app-network
+      - app2-network
     labels:
-      - "traefik.http.routers.app2.rule=Host(app2.localhost)"
+      - "traefik.enable=true"
+      - "traefik.http.routers.app2.entrypoints=web"
+      - "traefik.http.routers.app2.rule=Host(\"test.nokvag.ru\")"
+      - "traefik.http.services.app2.loadbalancer.server.port=8081"
+      - "traefik.http.services.app2.loadbalancer.healthcheck.path=/healthz"
+      - "traefik.http.services.app2.loadbalancer.healthcheck.interval=10s"
+      - "traefik.http.services.app2.loadbalancer.healthcheck.timeout=3s"
+    expose:
+      - "8081"
 
   traefik:
     image: traefik:v2.9
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker"
-      - "--entrypoints.web.address=:80"
     ports:
       - "80:80"
       - "8080:8080"
     networks:
-      - app-network
+      - app1-network
+      - app2-network
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-
+      - "./traefik.yml:/etc/traefik/traefik.yml"
 networks:
-  app-network:
+  app1-network:
+    driver: bridge
+  app2-network:
     driver: bridge
